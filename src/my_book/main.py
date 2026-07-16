@@ -61,24 +61,28 @@ class BookFlow(Flow[BookState]):
         print("Warning: Could not parse outline as JSON. Raw output:")
         print(raw_output)
         return [ChapterOutline(title="Chapter 1", description=raw_output[:500])]
+
     @listen(generate_book_outline)
     async def write_chapters(self):
         print("Writing Book Chapters")
 
+        # Create a hyper-lightweight string of just titles to keep context small
+        lightweight_outline = ", ".join([co.title for co in self.state.book_outline])
+
         chapters = []
         for chapter_outline in self.state.book_outline:
             print(f"Writing Chapter: {chapter_outline.title}")
-            print(f"Description: {chapter_outline.description}")
             
+            # Truncate descriptions to save critical tokens if they are wordy
+            clean_description = (chapter_outline.description[:300] + '...') if len(chapter_outline.description) > 300 else chapter_outline.description
+
             output = await WriteBookChapterCrew().crew().kickoff_async(
                 inputs={
-                    "goal": self.state.goal,
-                    "topic": self.state.topic,
+                    "goal": self.state.goal[:400],      # Safeguard: Truncate goal if too long
+                    "topic": self.state.topic[:200],    # Safeguard: Truncate topic if too long
                     "chapter_title": chapter_outline.title,
-                    "chapter_description": chapter_outline.description,
-                    "book_outline": json.dumps(
-                        [co.model_dump() for co in self.state.book_outline]
-                    ),
+                    "chapter_description": clean_description,
+                    "book_outline": lightweight_outline, 
                 }
             )
             chapter = Chapter(title=chapter_outline.title, content=output.raw)
@@ -86,21 +90,7 @@ class BookFlow(Flow[BookState]):
             print(f"Finished: {chapter_outline.title}")
 
         self.state.book = chapters
-    @listen(write_chapters)
-    def save_book(self):
-        print("Saving Book")
-        book_path = "output/book.md"
-        import os
-        os.makedirs("output", exist_ok=True)
 
-        with open(book_path, "w") as f:
-            f.write(f"# {self.state.title}\n\n")
-            for chapter in self.state.book:
-                f.write(f"## {chapter.title}\n\n")
-                f.write(chapter.content)
-                f.write("\n\n")
-
-        print(f"Book saved to {book_path}")
 
 
 def kickoff():

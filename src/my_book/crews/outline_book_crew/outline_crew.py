@@ -7,7 +7,7 @@ from my_book.types import OutlineOutput
 
 load_dotenv()
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 @CrewBase
 class OutlineCrew:
@@ -17,9 +17,9 @@ class OutlineCrew:
     tasks_config = "config/tasks.yaml"
 
     llm = LLM(
-        model="groq/llama-3.1-8b-instant",
+        model="gemini/gemini-3.1-flash-lite",
         temperature=0,
-        api_key=GROQ_API_KEY
+        api_key=GEMINI_API_KEY
     )
 
     @agent
@@ -59,4 +59,6 @@ class OutlineCrew:
             agents=self.agents,
             tasks=self.tasks,
             verbose=True,
+            cache=True,
+            max_rpm=10
         )

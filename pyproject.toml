@@ -6,14 +6,17 @@ authors = [{ name = "Your Name", email = "you@example.com" }]
 requires-python = ">=3.10,<3.13"
 dependencies = [
     "crewai[tools]==1.14.7",
+    "fastapi>=0.139.0",
+    "google-genai>=2.11.0",
     "litellm>=1.89.3",
+    "requests>=2.34.2",
+    "uvicorn>=0.49.0",
 ]
 
 [project.scripts]
 kickoff = "my_book.main:kickoff"
 run_crew = "my_book.main:kickoff"
-plot = "my_book.main:plot"
-run_with_trigger = "my_book.main:run_with_trigger"
+start-api = "my_book.api:start"
 
 [build-system]
 requires = ["hatchling"]
