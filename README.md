@@ -62,7 +62,7 @@ Spawned once per chapter, runs concurrently.
 - *Writer Agent* — writes ~3,000 words of Markdown per chapter, with the full book outline passed as context for narrative consistency
 
 **FastAPI Backend — Serving Layer**
-Wraps the `BookFlow` pipeline and exposes it over REST. Once `save_book` writes the manuscript to `output/book.md`, the backend reads and serves it to the frontend as structured JSON (or raw Markdown) for rendering.
+Wraps the `BookFlow` pipeline and exposes it over REST. Once generation completes, the backend returns the generated manuscript directly from the Flow's state memory as structured JSON to the frontend.
 
 **Vite + React Frontend — Presentation Layer**
 A lightweight React app (bundled with Vite) that calls the FastAPI backend and displays the final assembled book in a clean, readable, chapter-by-chapter view once generation completes.
@@ -119,7 +119,7 @@ SERPER_API_KEY=your_serper_api_key
 ### Run the Backend
 
 ```bash
-# From the repo root — starts the FastAPI server which runs the flow and serves output/book.md
+# From the repo root — starts the FastAPI server which runs the flow
 uvicorn src.my_book.api:app --reload
 ```
 
@@ -178,7 +178,7 @@ my_book/
 3. `_parse_outline()` parses the raw output into `List[ChapterOutline]`; falls back to a stub chapter if JSON is malformed
 4. `write_chapters` fans out to `N` parallel `WriteBookChapterCrew` instances via `asyncio.gather`, each receiving its chapter's title, description, and the full book outline for context
 5. `save_book` assembles all chapters in order and writes the final manuscript to `output/book.md`
-6. The FastAPI backend reads `output/book.md` once generation completes and exposes it via a REST endpoint
+6. The FastAPI backend awaits the pipeline completion and then returns the generated manuscript directly from the Flow's state memory as structured JSON for the frontend to render.
 7. The Vite + React frontend fetches the finished manuscript from the backend and renders it as a clean, readable book view
 
 ---
